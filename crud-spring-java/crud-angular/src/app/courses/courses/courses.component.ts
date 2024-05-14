@@ -2,7 +2,9 @@ import { Component } from '@angular/core';
 import { Course } from '../model/course';
 import { MatTableModule } from '@angular/material/table';
 import { CoursesService } from '../services/courses.service';
-import { Observable, delay, first, tap } from 'rxjs';
+import { Observable, catchError, delay, first, of, tap } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
+import { ErrorDialogComponent } from '../../shared/components/error-dialog/error-dialog.component';
 
 @Component({
   selector: 'app-courses',
@@ -15,14 +17,23 @@ export class CoursesComponent {
   displayedColumns = [ 'name', 'category' ]
 
 
-  constructor(private coursesService: CoursesService) {
+  constructor(
+    private coursesService: CoursesService,
+    public dialog: MatDialog
+  ) {
     this.courses$ = this.coursesService.list().pipe(
-      first(),
-      delay(5000),
-      tap(courses => console.log(courses))
+     catchError( error => {
+      this.onError('Erro ao carregar cursos.')
+      return of([])
+     })
     )
   }
 
 
+  onError(errorMsg: string) {
+    this.dialog.open(ErrorDialogComponent, {
+      data: errorMsg
+    })
+  }
 
 }
